@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>शिंदे गुरुजींची शाळा - शिकूया आणि खेळूया!</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #74b9ff, #ffeaa7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 350px;
+            text-align: center;
+        }
+        h1 {
+            color: #d63031;
+            font-size: 24px;
+            margin-bottom: 2px;
+        }
+        .school-tag {
+            background: #ffeaa7;
+            color: #d63031;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 10px;
+            border: 1px dashed #fab1a0;
+        }
+        .sub-text {
+            color: #636e72;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+        .menu-btn, .btn {
+            background-color: #0984e3;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            transition: 0.2s;
+        }
+        .menu-btn:hover, .btn:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        .math-btn { background-color: #00b894; }
+        .abc-btn { background-color: #e17055; }
+        .missing-btn { background-color: #6c5ce7; }
+        .back-btn { background-color: #b2bec3; font-size: 14px; padding: 10px; width: auto; margin-top: 15px; }
+
+        .game-area { display: none; }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+            font-weight: bold;
+            color: #2d3436;
+            margin-bottom: 10px;
+            background: #f1f2f6;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .question-box {
+            font-size: 26px;
+            font-weight: bold;
+            color: #2d3436;
+            margin: 15px 0;
+            background: #dfe6e9;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .opt-btn {
+            background-color: #0984e3;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        #feedback { font-size: 16px; font-weight: bold; height: 25px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎒 डिजिटल शाळा 🚀</h1>
+        <div class="school-tag">⭐ शिंदे गुरुजींची शाळा ⭐</div>
+        <div class="sub-text">खेळता-खेळता शिका आणि गुण मिळवा!</div>
+
+        <!-- मुख्य मेनू (Home Menu) -->
+        <div id="main-menu">
+            <button class="menu-btn math-btn" onclick="startMathQuiz()">🧮 गणिताची जादू (Math Quiz)</button>
+            <button class="menu-btn abc-btn" onclick="startMarathiABC()">🇮🇳 मराठी अक्षर ओळख</button>
+            <button class="menu-btn missing-btn" onclick="startMissingABC()">🔤 गाळलेली एबीसीडी (A-Z)</button>
+        </div>
+
+        <!-- गेम खेळण्याचा एरिया -->
+        <div id="game-area" class="game-area">
+            <div class="stats-bar">
+                <div>🏆 गुण: <span id="score">0</span></div>
+                <div>⏱️ वेळ: <span id="timer">30</span>s</div>
+            </div>
+
+            <div class="question-box" id="question">प्रश्न</div>
+
+            <div class="options">
+                <button class="opt-btn" onclick="checkAnswer(0)" id="opt0">0</button>
+                <button class="opt-btn" onclick="checkAnswer(1)" id="opt1">0</button>
+                <button class="opt-btn" onclick="checkAnswer(2)" id="opt2">0</button>
+                <button class="opt-btn" onclick="checkAnswer(3)" id="opt3">0</button>
+            </div>
+
+            <div id="feedback"></div>
+            <button class="menu-btn back-btn" onclick="goHome()">🏠 मुख्य मेनूवर जा</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = "";
+        let score = 0;
+        let correctAnswer = "";
+        let optionsList = [];
+        let timeLeft = 30;
+        let timerInterval;
+
+        const marathiLetters = ["अ", "आ", "इ", "ई", "उ", "ऊ", "ऋ", "ए", "ऐ", "ओ", "औ", "क", "ख", "ग", "घ", "च", "छ", "ज", "झ", "ट", "ठ", "ड", "ढ", "ण", "त", "थ", "द", "ध", "न", "प", "फ", "ब", "भ", "म", "य", "र", "ल", "व", "श", "ष", "स", "ह", "ळ", "क्ष", "ज्ञ"];
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 30;
+            document.getElementById("timer").innerText = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    let feedback = document.getElementById("feedback");
+                    feedback.style.color = "#e17055";
+                    feedback.innerText = "⏰ वेळ संपली!";
+
+                    for (let i = 0; i < 4; i++) {
+                        document.getElementById(`opt${i}`).disabled = true;
+                    }
+
+                    setTimeout(loadNextQuestion, 1500);
+                }
+            }, 1000);
+        }
+
+        function showGameScreen() {
+            document.getElementById("main-menu").style.display = "none";
+            document.getElementById("game-area").style.display = "block";
+            score = 0;
+            document.getElementById("score").innerText = score;
+        }
+
+        function goHome() {
+            clearInterval(timerInterval);
+            document.getElementById("main-menu").style.display = "block";
+            document.getElementById("game-area").style.display = "none";
+        }
+
+        function startMathQuiz() {
+            currentMode = "math";
+            showGameScreen();
+            loadMathQuestion();
+        }
+
+        function loadMathQuestion() {
+            document.getElementById("feedback").innerText = "";
+            let num1 = Math.floor(Math.random() * 10) + 1;
+            let num2 = Math.floor(Math.random() * 10) + 1;
+            let op = Math.random() > 0.5 ? '+' : '-';
+            if (op === '-' && num1 < num2) { [num1, num2] = [num2, num1]; }
+
+            correctAnswer = (op === '+') ? (num1 + num2) : (num1 - num2);
+            document.getElementById("question").innerText = `${num1} ${op} ${num2} = ?`;
+
+            generateOptions(correctAnswer, (val) => val + (Math.floor(Math.random() * 6) - 3), (val) => val < 0);
+            startTimer();
+        }
+
+        function startMarathiABC() {
+            currentMode = "marathiABC";
+            showGameScreen();
+            loadMarathiQuestion();
+        }
+
+        function loadMarathiQuestion() {
+            document.getElementById("feedback").innerText = "";
+            let index = Math.floor(Math.random() * marathiLetters.length);
+            correctAnswer = marathiLetters[index];
+
+            document.getElementById("question").innerHTML = `<span style="color:#d63031; font-size:36px;">${correctAnswer}</span>`;
+
+            let otherLetters = marathiLetters.filter(l => l !== correctAnswer);
+            generateArrayOptions(correctAnswer, otherLetters);
+            startTimer();
+        }
+
+        function startMissingABC() {
+            currentMode = "missingABC";
+            showGameScreen();
+            loadMissingQuestion();
+        }
+
+        function loadMissingQuestion() {
+            document.getElementById("feedback").innerText = "";
+            let idx = Math.floor(Math.random() * 24);
+            let c1 = alphabet[idx];
+            let c2 = alphabet[idx + 1];
+            let c3 = alphabet[idx + 2];
+
+            correctAnswer = c2;
+            document.getElementById("question").innerText = `${c1}  _  ${c3}`;
+
+            let otherChars = alphabet.filter(c => c !== correctAnswer);
+            generateArrayOptions(correctAnswer, otherChars);
+            startTimer();
+        }
+
+        function generateOptions(correct, wrongFunc, invalidCheck) {
+            let correctPos = Math.floor(Math.random() * 4);
+            optionsList = [];
+            for (let i = 0; i < 4; i++) {
+                if (i === correctPos) {
+                    optionsList.push(correct);
+                } else {
+                    let wrong = wrongFunc(correct);
+                    while (wrong === correct || invalidCheck(wrong) || optionsList.includes(wrong)) {
+                        wrong = wrongFunc(correct);
+                    }
+                    optionsList.push(wrong);
+                }
+            }
+            renderOptions();
+        }
+
+        function generateArrayOptions(correct, pool) {
+            let correctPos = Math.floor(Math.random() * 4);
+            optionsList = [];
+            for (let i = 0; i < 4; i++) {
+                if (i === correctPos) {
+                    optionsList.push(correct);
+                } else {
+                    let randVal = pool[Math.floor(Math.random() * pool.length)];
+                    while (optionsList.includes(randVal) || randVal === correct) {
+                        randVal = pool[Math.floor(Math.random() * pool.length)];
+                    }
+                    optionsList.push(randVal);
+                }
+            }
+            renderOptions();
+        }
+
+        function renderOptions() {
+            for (let i = 0; i < 4; i++) {
+                let btn = document.getElementById(`opt${i}`);
+                btn.innerText = optionsList[i];
+                btn.disabled = false;
+            }
+        }
+
+        function checkAnswer(selectedIndex) {
+            clearInterval(timerInterval);
+            let selectedVal = optionsList[selectedIndex];
+            let feedback = document.getElementById("feedback");
+
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`opt${i}`).disabled = true;
+            }
+
+            if (selectedVal === correctAnswer) {
+                score += 10;
+                feedback.style.color = "#00b894";
+                feedback.innerText = "🎉 अगदी बरोबर! शाब्बास!";
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+            } else {
+                score = Math.max(0, score - 5);
+                feedback.style.color = "#d63031";
+                feedback.innerText = `❌ चूक! उत्तर होते: ${correctAnswer}`;
+            }
+
+            document.getElementById("score").innerText = score;
+            setTimeout(loadNextQuestion, 1800);
+        }
+
+        function loadNextQuestion() {
+            if (currentMode === "math") loadMathQuestion();
+            else if (currentMode === "marathiABC") loadMarathiQuestion();
+            else if (currentMode === "missingABC") loadMissingQuestion();
+        }
+    </script>
+
+</body>
+</html>
